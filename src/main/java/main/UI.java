@@ -16,6 +16,7 @@ public class UI {
     GamePanel gp;
     Graphics2D g2;
     Font eightBitDragon;
+    Font dialogueFont;
     BufferedImage heart_full, heart_blank;
     public boolean messageOn = false;
     public String messageDamage = "";
@@ -25,6 +26,66 @@ public class UI {
     DecimalFormat dFormat = new DecimalFormat("#0.00");
     public int commandNum = 0;
     public int pauseCommandNum = 0;
+
+
+    public boolean monologueOn = false;
+    public String monologueText = "";
+    int monologueCounter = 0;
+    int monologueDuration = 180; // 3 วินาที ถ้าเกม 60 FPS
+
+
+    public void showMonologue(String text) {
+        monologueText = text;
+        monologueOn = true;
+        monologueCounter = 0;
+    }
+
+    public void drawMonologue() {
+        if (monologueOn == true) {
+            g2.setFont(dialogueFont.deriveFont(Font.BOLD, 18F));
+
+            int textWidth = (int) g2.getFontMetrics().getStringBounds(monologueText, g2).getWidth();
+            int boxWidth = Math.min(Math.max(textWidth + 36, 260), gp.screenWidth - gp.tileSize * 2);
+            int boxHeight = 54;
+            int x = gp.player.screenX + gp.tileSize / 2 - boxWidth / 2;
+            int y = gp.player.screenY - boxHeight - 14;
+
+            if (x < gp.tileSize / 2) {
+                x = gp.tileSize / 2;
+            }
+            if (x + boxWidth > gp.screenWidth - gp.tileSize / 2) {
+                x = gp.screenWidth - gp.tileSize / 2 - boxWidth;
+            }
+            if (y < gp.tileSize) {
+                y = gp.player.screenY + gp.tileSize + 12;
+            }
+
+            g2.setColor(new Color(255, 255, 255, 235));
+            g2.fillRoundRect(x, y, boxWidth, boxHeight, 14, 14);
+            g2.setColor(new Color(45, 45, 45, 230));
+            g2.drawRoundRect(x, y, boxWidth, boxHeight, 14, 14);
+
+            int tailX = gp.player.screenX + gp.tileSize / 2;
+            int tailY = y + boxHeight;
+            int[] xPoints = {tailX - 8, tailX + 8, tailX};
+            int[] yPoints = {tailY - 1, tailY - 1, tailY + 12};
+            g2.setColor(new Color(255, 255, 255, 235));
+            g2.fillPolygon(xPoints, yPoints, 3);
+            g2.setColor(new Color(45, 45, 45, 230));
+            g2.drawPolygon(xPoints, yPoints, 3);
+
+            g2.setColor(new Color(25, 25, 25));
+            g2.drawString(monologueText, x + 18, y + 34);
+
+            monologueCounter++;
+
+            if (monologueCounter > monologueDuration) {
+                monologueCounter = 0;
+                monologueOn = false;
+            }
+        }
+    }
+
 
     public UI(GamePanel gp) {
         this.gp = gp;
@@ -37,6 +98,7 @@ public class UI {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        dialogueFont = new Font("Tahoma", Font.PLAIN, 18);
 
         // Create heart object
         SuperObject heart = new OBJ_Heart(gp);
@@ -143,6 +205,7 @@ public class UI {
                     }
                 }
             }
+            drawMonologue();
         }
 
         // Pause State

@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.Random;
 import javax.imageio.ImageIO;
 
 import main.GamePanel;
@@ -15,6 +16,32 @@ import main.KeyHandler;
 public class Player extends Entity {
 
     KeyHandler keyH;
+    private final Random random = new Random();
+    private static final String[] MONOLOGUE_EUNJI = {
+        "โอ๊ย วันนี้มันวันอะไรเนี่ย",
+        "เจ็บนะ แต่หยุดไม่ได้แล้ว",
+        "ทำไมทุกอย่างต้องเกิดวันนี้ด้วย"
+    };
+    private static final String[] MONOLOGUE_EGG = {
+        "ยังดีที่มีอะไรมาช่วยชีวิต",
+        "พลังกลับมาแล้ว ไปต่อ!",
+        "อย่างน้อยวันนี้ก็ยังมีเรื่องดี"
+    };
+    private static final String[] MONOLOGUE_END = {
+        "ถึงแล้ว... ยังทันใช่ไหม",
+        "ขอให้ยังไม่เริ่มสอบทีเถอะ",
+        "รอดแล้วหรือเปล่านะ"
+    };
+    private static final String[] MONOLOGUE_NPC = {
+        "ขอโทษนะ ฉันรีบจริง ๆ",
+        "หลบก่อนนะ เดี๋ยวสอบไม่ทัน",
+        "ไม่ได้ตั้งใจชนจริง ๆ"
+    };
+    private static final String[] MONOLOGUE_CAR = {
+        "วันนี้ถนนโหดกว่าข้อสอบอีก",
+        "เกือบได้สอบซ่อมชีวิตแล้ว",
+        "นี่มันทางไปสอบหรือสนามวัดใจ"
+    };
 
     public final int screenX;
     public final int screenY;
@@ -51,6 +78,10 @@ public class Player extends Entity {
         maxLife = 5;
         life = maxLife;
 
+    }
+
+    private String randomMonologue(String[] lines) {
+        return lines[random.nextInt(lines.length)];
     }
 
     public void getPlayerImage() {
@@ -175,6 +206,7 @@ public class Player extends Entity {
                     //gp.playSE(3);
                     gp.ui.showMessage("hp: -1");
                     gp.player.life -= 1;
+                    gp.ui.showMonologue(randomMonologue(MONOLOGUE_EUNJI));
                     break;
                 case "Egg":
                     if (gp.player.life < 5) {
@@ -182,33 +214,27 @@ public class Player extends Entity {
                     }
                     gp.ui.showMessage("hp: +1");
                     gp.obj[i] = null;
+                    gp.ui.showMonologue(randomMonologue(MONOLOGUE_EGG));
                     // gp.playSE(3);
                     break;
                 case "end":
                     gp.ui.gameFinished = true;
                     gp.stopMusic();
                     gp.playSE(1);
-   
+                    gp.ui.showMonologue(randomMonologue(MONOLOGUE_END));
                     break;
                 case "walk":
                     break;
                 case "water":
-//                        gp.obj[i] = null;
-//                        gp.ui.showMessage("-1");
-//                        gp.player.life -= 1;
                     break;
                 default:
                     collisionOn = true;
-//                    System.out.println("collision");
-
             }
         }
     }
 
     public void draw(Graphics2D g2) {
 
-//		g2.setColor(Color.white);
-//		g2.fillRect(x, y, gp.tileSize, gp.tileSize);
         BufferedImage image = null;
 
         switch (direction) {
@@ -298,10 +324,12 @@ public class Player extends Entity {
                 if (invincible == false) {
                     life -= 1;
                     gp.ui.showMessage("nom");
+                    gp.ui.showMonologue(randomMonologue(MONOLOGUE_NPC));
                     invincible = true;
                 }
             } else {
                 // car
+                gp.ui.showMonologue(randomMonologue(MONOLOGUE_CAR));
                 life = 0;
             }
         }
