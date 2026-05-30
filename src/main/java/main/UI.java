@@ -1,9 +1,12 @@
 package main;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +21,7 @@ public class UI {
     Font eightBitDragon;
     Font dialogueFont;
     BufferedImage heart_full, heart_blank;
+    SuperObject goalObject;
     public boolean messageOn = false;
     public String messageDamage = "";
     int messageCounter = 0;
@@ -181,27 +185,31 @@ public class UI {
 
                 //Time
                 playTime += (double) 1 / 60;
-                if (playTime > 90) {
-                    gp.gameState = gp.gameOverState;
+                double remainingTime = 90 - playTime;
+                g2.setFont(this.eightBitDragon.deriveFont(23F));
+                if (remainingTime >= 0) {
+                    g2.setColor(Color.WHITE);
+                    g2.drawString("Time : " + dFormat.format(remainingTime), gp.tileSize * 12, 50);
                 } else {
-                    g2.setFont(this.eightBitDragon.deriveFont(23F));
-                    g2.drawString("Time : " + dFormat.format(90 - playTime), gp.tileSize * 12, 50);
+                    g2.setColor(Color.ORANGE);
+                    g2.drawString("Late : +" + dFormat.format(Math.abs(remainingTime)), gp.tileSize * 12, 50);
+                }
+                drawGoalArrow();
 
-                    // Message 
-                    if (messageOn == true) {
-                        g2.setFont(this.eightBitDragon.deriveFont(20F)); // change font for messageDamage especially s
+                // Message 
+                if (messageOn == true) {
+                    g2.setFont(this.eightBitDragon.deriveFont(20F)); // change font for messageDamage especially s
 
-                        int x = getXforCenteredText(messageDamage);
-                        int y = gp.screenHeight / 2;
+                    int x = getXforCenteredText(messageDamage);
+                    int y = gp.screenHeight / 2;
 
-                        g2.drawString(messageDamage, x + 35, y - 24);
-                        messageCounter++;
+                    g2.drawString(messageDamage, x + 35, y - 24);
+                    messageCounter++;
 
-                        // 2 seconds
-                        if (messageCounter > 60) {
-                            messageCounter = 0;
-                            messageOn = false;
-                        }
+                    // 2 seconds
+                    if (messageCounter > 60) {
+                        messageCounter = 0;
+                        messageOn = false;
                     }
                 }
             }
@@ -219,6 +227,78 @@ public class UI {
         }
 
 //       
+    }
+
+    private SuperObject getGoalObject() {
+        if (goalObject != null) { return goalObject; } // ถ้าเคยหาเจอแล้ว ให้ส่งค่ากลับไปเลย (ไม่ต้องหาซ้ำให้เปลืองแรงเครื่อง)
+    
+        for (SuperObject object : gp.obj) { // วนลูปตรวจเช็ควัตถุทั้งหมดที่มีอยู่ในเกมขณะนั้น
+            if (object != null && "end".equals(object.name)) { // ถ้าเจอวัตถุที่ชื่อว่า "end" (ห้องสอบ)
+                goalObject = object; // บันทึกเก็บไว้ในตัวแปร
+                return goalObject; // ส่งค่านั้นกลับไปใช้งาน
+            }
+        }
+        return null; // ถ้าในด่านนั้นยังไม่ได้วางจุดจบเกม จะส่งค่าความว่างเปล่ากลับไป
+    }
+
+    public void drawGoalArrow() {
+        SuperObject goal = getGoalObject();
+        if (goal == null) {
+            return;
+        }
+
+        int playerCenterX = gp.player.worldX + gp.tileSize / 2; // หาจุดกึ่งกลางตัวผู้เล่น
+        int playerCenterY = gp.player.worldY + gp.tileSize / 2;
+        int goalCenterX = goal.worldX + gp.tileSize / 2;       // หาจุดกึ่งกลางของห้องสอบ
+        int goalCenterY = goal.worldY + gp.tileSize / 2;
+
+        double dx = goalCenterX - playerCenterX; // หาความต่างของระยะทางแนวนอน (Delta X)
+        double dy = goalCenterY - playerCenterY; // หาความต่างของระยะทางแนวตั้ง (Delta Y)
+
+        double angle = Math.atan2(dy, dx); // ใช้สูตรตรีโกณมิติ (Arc Tangent) เพื่อคำนวณหา "องศา/มุม" ที่ลูกศรต้องหมุนชี้ไป
+        int distanceTiles = (int) Math.round(Math.sqrt(dx * dx + dy * dy) / gp.tileSize); // ใช้ทฤษฎีพีทาโกรัสหาเส้นทแยงมุม แล้วหารด้วยขนาดบล็อกเพื่อแปลงค่าเป็นจำนวนช่อง (Tiles)
+
+        
+        int x = gp.screenWidth - gp.tileSize - 18; // ตั้งพิกัดหน้าจอที่จะใช้วาด (มุมขวาล่าง)
+        int y = gp.screenHeight - gp.tileSize - 38;
+        int radius = 28; // รัศมีวงกลม
+
+        AffineTransform oldTransform = g2.getTransform(); // จดจำมุมกล้องปกติของหน้าจอไว้ก่อน
+        java.awt.Stroke oldStroke = g2.getStroke();
+        Font oldFont = g2.getFont();
+
+        g2.setColor(new Color(0, 0, 0, 145));
+        g2.fillOval(x - radius, y - radius, radius * 2, radius * 2);
+        g2.setColor(new Color(255, 255, 255, 210));
+        g2.setStroke(new BasicStroke(2));
+        g2.drawOval(x - radius, y - radius, radius * 2, radius * 2);
+
+        g2.translate(x, y); // ย้ายจุดศูนย์กลางพู่กันไปที่ตำแหน่งวงกลม
+        g2.rotate(angle);   // หมุนพู่กันไปตามองศาที่คำนวณได้จากสูตรตรีโกณมิติด้านบน
+
+        Polygon arrow = new Polygon();
+        arrow.addPoint(22, 0);
+        arrow.addPoint(-12, -13);
+        arrow.addPoint(-5, 0);
+        arrow.addPoint(-12, 13);
+
+        g2.setColor(new Color(255, 196, 53));
+        g2.fillPolygon(arrow);
+        g2.setColor(new Color(45, 45, 45));
+        g2.drawPolygon(arrow);
+
+        g2.setTransform(oldTransform);
+        g2.setStroke(oldStroke);
+
+        g2.setFont(dialogueFont.deriveFont(Font.BOLD, 13F));
+        String distanceText = distanceTiles + " tiles"; // ข้อความที่จะแสดง
+        int textWidth = (int) g2.getFontMetrics().getStringBounds(distanceText, g2).getWidth();
+        g2.setColor(new Color(0, 0, 0, 145));
+        g2.fillRoundRect(x - textWidth / 2 - 8, y + radius + 5, textWidth + 16, 22, 8, 8);
+        g2.setColor(Color.WHITE);
+        g2.drawString(distanceText, x - textWidth / 2, y + radius + 21);
+
+        g2.setFont(oldFont);
     }
 
     public void drawTitleScreen() {
