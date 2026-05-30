@@ -1,0 +1,17 @@
+out/
+out-maven-check/
+target/
+*.class
+
+# Local IDE/workspace files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log
+

@@ -1,0 +1,11 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.project.sourcePaths": [
+        "src/main/java"
+    ],
+    "java.project.resourcePaths": [
+        "src/main/resources"
+    ],
+    "java.project.outputPath": "out",
+    "java.compile.nullAnalysis.mode": "disabled"
+}
